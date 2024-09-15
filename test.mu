@@ -1,6 +1,7 @@
-x = 5;
-if (x > 3) {
-    log(x);
+if (x == 0) {
+    log "X is zero";
+} else if (x > 0) {
+    log "X is positive";
 } else {
-    x = x + 1;
+    log "X is negative";
 }
