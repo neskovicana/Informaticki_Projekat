@@ -1,6 +1,7 @@
-x = 5;
-if (x > 3) {
-    log(x);
-} else {
-    x = x + 1;
-}
+
+log "End of program";
+
+a = 3.14;
+b = true;
+c = "Hello World";
+d = nil;

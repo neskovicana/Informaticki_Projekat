@@ -1,217 +1,567 @@
+import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.Stack;
 
 public class EnrichingListener extends MuBaseListener {
 
-    // Stack to hold nodes during tree traversal
-    private Stack<Node> nodeStack = new Stack<>();
-    
-    // Root node for the CST tree
-    private Node root;
+    private Stack<TreeNode> nodeStack = new Stack<>();
+    private TreeNode root;
 
-    public Node getRoot() {
-        return root;
+    public TreeNode getRoot() {
+        return this.root;
     }
 
     @Override
     public void enterParse(MuParser.ParseContext ctx) {
-        nodeStack.push(new Node("COMPILATION_UNIT"));
+        System.out.println("COMPILATION_UNIT");
+
+        root = new TreeNode("COMPILATION_UNIT");
+        nodeStack.push(root);
     }
 
     @Override
     public void exitParse(MuParser.ParseContext ctx) {
-        root = nodeStack.pop();  // The root of the entire CST
+
     }
 
     @Override
     public void enterBlock(MuParser.BlockContext ctx) {
-        Node blockNode = new Node("BLOCK_SCOPE");
+        System.out.println("BLOCK_SCOPE");
+        System.out.println("{");
+
+        TreeNode blockNode = new TreeNode("BLOCK_SCOPE");
+        blockNode.addChild(new TreeNode("{"));
+        nodeStack.peek().addChild(blockNode);
         nodeStack.push(blockNode);
     }
 
     @Override
     public void exitBlock(MuParser.BlockContext ctx) {
-        Node blockNode = nodeStack.pop();
-        blockNode.addChild(new Node("{"));
-        
-        // Add all statements from the block
-        for (int i = 0; i < ctx.stat().size(); i++) {
-            blockNode.addChild(nodeStack.pop());
-        }
-
-        blockNode.addChild(new Node("}"));
-        nodeStack.peek().addChild(blockNode);  // Add the block to the parent node
+        System.out.println("}");
+        nodeStack.pop();
     }
 
     @Override
     public void enterStat(MuParser.StatContext ctx) {
-        nodeStack.push(new Node("STATEMENT"));
+        System.out.println("STATEMENT");
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode statNode = new TreeNode("STATEMENT");
+        parent.addChild(statNode);
+
+        nodeStack.push(statNode);
     }
 
     @Override
     public void exitStat(MuParser.StatContext ctx) {
-        Node statementNode = nodeStack.pop();
-        nodeStack.peek().addChild(statementNode);
+        nodeStack.pop();
     }
 
     @Override
     public void enterAssignment(MuParser.AssignmentContext ctx) {
-        Node assignmentNode = new Node("ASSIGNMENT");
-        
-        // Create operator node for '='
-        Node operatorNode = new Node("OPERATOR");
-        Node operator = new Node("=");
-        operatorNode.addChild(operator);
-        
-        // Add ID as NAME node
-        Node nameNode = new Node("NAME");
-        Node nameChild = new Node(ctx.ID().getText());
-        nameNode.addChild(nameChild);
-        assignmentNode.addChild(nameNode);
-        
-        // Push operator and assignment nodes
-        assignmentNode.addChild(operatorNode);
-        nodeStack.push(assignmentNode);
+        System.out.println("ASSIGNMENT");
+        System.out.println("OPERATOR");
+        System.out.println("=");
+        System.out.println("NAME");
+        System.out.println(ctx.ID().getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode assignment = new TreeNode("ASSIGNMENT");
+        TreeNode operator = new TreeNode("OPERATOR");
+        TreeNode equals = new TreeNode("=");
+        TreeNode name = new TreeNode("NAME");
+        TreeNode value = new TreeNode(ctx.ID().getText());
+
+        parent.addChild(assignment);
+        assignment.addChild(operator);
+        operator.addChild(equals);
+        equals.addChild(name);
+        equals.addChild(value);
+
+        nodeStack.push(assignment);
     }
 
     @Override
     public void exitAssignment(MuParser.AssignmentContext ctx) {
-        Node exprNode = nodeStack.pop(); // Pop the expression node
-        Node assignmentNode = nodeStack.pop(); // Pop the assignment node
-        
-        // Add expression as the right-hand side of the operator
-        assignmentNode.getChildren().get(1).addChild(exprNode); // Add exprNode to OPERATOR node
-        
-        // Attach the assignment node to the parent
-        nodeStack.peek().addChild(assignmentNode);
+        nodeStack.pop();
     }
 
     @Override
     public void enterIf_stat(MuParser.If_statContext ctx) {
-        nodeStack.push(new Node("BRANCH_STATEMENT"));
+        System.out.println("BRANCH_STATEMENT");
+        
+        TreeNode parent = nodeStack.peek();
+        TreeNode statNode = new TreeNode("BRANCH_STATEMENT");
+        parent.addChild(statNode);
+
+        nodeStack.push(statNode);
     }
 
     @Override
     public void exitIf_stat(MuParser.If_statContext ctx) {
-        Node branchNode = nodeStack.pop();
-
-        // Add "if" keyword
-        Node ifKeywordNode = new Node("KEYWORD");
-        Node ifNode = new Node("if");
-        ifKeywordNode.addChild(ifNode);
-        branchNode.addChild(ifKeywordNode);
-
-        // Add the condition block
-        branchNode.addChild(nodeStack.pop());
-
-        // Handle "else if" blocks
-        for (int i = 1; i < ctx.condition_block().size(); i++) {
-            Node elseIfKeywordNode = new Node("KEYWORD");
-            elseIfKeywordNode.addChild(new Node("else if"));
-            branchNode.addChild(elseIfKeywordNode);
-            branchNode.addChild(nodeStack.pop());
-        }
-
-        // Handle "else" block if exists
-        if (ctx.stat_block() != null) {
-            Node elseKeywordNode = new Node("KEYWORD");
-            elseKeywordNode.addChild(new Node("else"));
-            branchNode.addChild(elseKeywordNode);
-            branchNode.addChild(nodeStack.pop());
-        }
-
-        nodeStack.peek().addChild(branchNode);
+        nodeStack.pop();
     }
 
     @Override
     public void enterCondition_block(MuParser.Condition_blockContext ctx) {
-        Node conditionBlockNode = new Node("CONDITION_BLOCK");
-        nodeStack.push(conditionBlockNode);
+        ParseTree parent = ctx.getParent();
+
+        // Prolazimo kroz roditelje dok ne pronađemo If_statContext
+        while (parent != null) {
+            if (parent instanceof MuParser.If_statContext) {
+                MuParser.If_statContext ifContext = (MuParser.If_statContext) parent;
+
+                // Prolazimo kroz sve condition_blocks unutar ifContext
+                for (int i = 0; i < ifContext.condition_block().size(); i++) {
+                    MuParser.Condition_blockContext conditionBlock = ifContext.condition_block(i);
+
+                    if (conditionBlock == ctx) {
+                        if (i == 0) {
+                            // Ovo je if deo
+                            System.out.println("KEYWORD");
+                            System.out.println("if");
+
+                            TreeNode parentTree = nodeStack.peek();
+                            TreeNode keyword = new TreeNode("KEYWORD");
+                            parentTree.addChild(keyword);
+                            TreeNode ifNode = new TreeNode("if");
+                            keyword.addChild(ifNode);
+
+                            TreeNode condBlockNode = new TreeNode("CONDITION_BLOCK");
+                            ifNode.addChild(condBlockNode);
+
+                            nodeStack.push(keyword);
+                        } else {
+                            // Ovo je else if deo
+                            System.out.println("KEYWORD");
+                            System.out.println("else if");
+
+                            TreeNode parentTree = nodeStack.peek();
+                            TreeNode keyword = new TreeNode("KEYWORD");
+                            parentTree.addChild(keyword);
+                            TreeNode elseIfNode = new TreeNode("else if");
+                            keyword.addChild(elseIfNode);
+
+                            TreeNode condBlockNode = new TreeNode("CONDITION_BLOCK");
+                            elseIfNode.addChild(condBlockNode);
+
+                            nodeStack.push(keyword);
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+            parent = parent.getParent();
+        }
+
+        System.out.println("CONDITION BLOCK");
+
+        System.out.println("(");
     }
 
     @Override
     public void exitCondition_block(MuParser.Condition_blockContext ctx) {
-        Node conditionBlockNode = nodeStack.pop();
+        System.out.println(")");
+        nodeStack.pop();
+    }
 
-        // Wrap the condition in parentheses
-        conditionBlockNode.addChild(new Node("("));
-        conditionBlockNode.addChild(nodeStack.pop());
-        conditionBlockNode.addChild(new Node(")"));
+    @Override
+    public void enterStat_block(MuParser.Stat_blockContext ctx) {
+        ParseTree parent = ctx.getParent();
 
-        // Add the statement block after the condition
-        conditionBlockNode.addChild(nodeStack.pop());
+        if (parent instanceof MuParser.If_statContext) {
+            MuParser.If_statContext ifContext = (MuParser.If_statContext) parent;
 
-        nodeStack.peek().addChild(conditionBlockNode);
+            if (ifContext.stat_block() != null) {
+                System.out.println("KEYWORD");
+                System.out.println("else");
+
+                TreeNode parentTree = nodeStack.peek();
+                TreeNode keyword = new TreeNode("KEYWORD");
+                parentTree.addChild(keyword);
+                TreeNode elseIfNode = new TreeNode("else");
+                keyword.addChild(elseIfNode);
+
+                TreeNode stat = new TreeNode("STATEMENT");
+                elseIfNode.addChild(stat);
+            } else {
+                TreeNode stat = new TreeNode("STATEMENT");
+                TreeNode parentTree = nodeStack.peek();
+                parentTree.addChild(stat);
+            }
+        }
+
+        System.out.println("STATEMENT");
+
+    }
+
+    @Override
+    public void exitStat_block(MuParser.Stat_blockContext ctx) {
     }
 
     @Override
     public void enterWhile_stat(MuParser.While_statContext ctx) {
-        Node whileNode = new Node("LOOP_STATEMENT");
-        Node keyword = new Node("KEYWORD");
-        keyword.addChild(new Node("while"));
-        whileNode.addChild(keyword);
+        System.out.println("LOOP_STATEMENT");
+        System.out.println("KEYWORD");
+        System.out.println("while");
+        System.out.println("CONDITION");
 
-        nodeStack.push(whileNode);
+        TreeNode parent = nodeStack.peek();
+        TreeNode statNode = new TreeNode("LOOP_STATEMENT");
+        TreeNode keyNode = new TreeNode("KEYWORD");
+        TreeNode whileNode = new TreeNode("while");
+        TreeNode condNode = new TreeNode("CONDITION");
+
+        parent.addChild(statNode);
+        statNode.addChild(keyNode);
+        keyNode.addChild(whileNode);
+        whileNode.addChild(condNode);
+
+        nodeStack.push(statNode);
     }
 
     @Override
     public void exitWhile_stat(MuParser.While_statContext ctx) {
-        Node whileNode = nodeStack.pop();
-        
-        // Add condition and block to the while node
-        whileNode.addChild(new Node("("));
-        whileNode.addChild(nodeStack.pop()); // Condition
-        whileNode.addChild(new Node(")"));
-        whileNode.addChild(nodeStack.pop()); // Block
-
-        nodeStack.peek().addChild(whileNode);
+        nodeStack.pop();
     }
 
     @Override
     public void enterLog(MuParser.LogContext ctx) {
-        Node logNode = new Node("LOG_STATEMENT");
-        Node keyword = new Node("KEYWORD");
-        logNode.addChild(keyword);
-        keyword.addChild(new Node("log"));
-        nodeStack.push(logNode);
+        System.out.println("KEYWORD");
+        System.out.println("log");
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode key = new TreeNode("KEYWORD");
+        TreeNode log = new TreeNode("log");
+        parent.addChild(key);
+        key.addChild(log);
+
+        nodeStack.push(key);
     }
 
     @Override
     public void exitLog(MuParser.LogContext ctx) {
-        Node logNode = nodeStack.pop();
-        logNode.addChild(nodeStack.pop());  // Add expression to the log statement
-        nodeStack.peek().addChild(logNode);
+        nodeStack.pop();
     }
 
     @Override
-    public void exitAdditiveExpr(MuParser.AdditiveExprContext ctx) {
-        Node additiveNode = new Node("EXPRESSION");
-        Node operatorNode = new Node("OPERATOR");
-        Node operator = new Node(ctx.op.getText());
-        operatorNode.addChild(operator);
+    public void enterNotExpr(MuParser.NotExprContext ctx) {
+        System.out.println("EXPRESSION");
 
-        operatorNode.addChild(nodeStack.pop());  // Right operand
-        operatorNode.addChild(nodeStack.pop());  // Left operand
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
 
-        additiveNode.addChild(operatorNode);
-        nodeStack.push(additiveNode);
+        parent.addChild(expr);
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitNotExpr(MuParser.NotExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterUnaryMinusExpr(MuParser.UnaryMinusExprContext ctx) {
+        System.out.println("EXPRESSION");
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
+
+        parent.addChild(expr);
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitUnaryMinusExpr(MuParser.UnaryMinusExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterMultiplicationExpr(MuParser.MultiplicationExprContext ctx) {
+        System.out.println("EXPRESSION");
+        System.out.println("OPERATOR");
+        System.out.println(ctx.op.getText());
+        System.out.println(ctx.expr(0));
+        System.out.println(ctx.expr(1));
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
+        TreeNode opNode = new TreeNode("OPERATOR");
+        TreeNode op = new TreeNode(ctx.op.getText());
+
+        parent.addChild(expr);
+        expr.addChild(opNode);
+        opNode.addChild(op);
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitMultiplicationExpr(MuParser.MultiplicationExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterAtomExpr(MuParser.AtomExprContext ctx) {
+        // TreeNode parent = nodeStack.peek();
+        // TreeNode atomNode = new TreeNode(ctx.getText());
+        // parent.addChild(atomNode);
+
+        // nodeStack.push(atomNode);
     }
 
     @Override
     public void exitAtomExpr(MuParser.AtomExprContext ctx) {
-        // No additional logic needed here
+        // nodeStack.pop();
+    }
+
+    @Override
+    public void enterOrExpr(MuParser.OrExprContext ctx) {
+        System.out.println("EXPRESSION");
+        System.out.println(ctx.expr(0).getText());
+        if (ctx.expr().size() > 1) {
+            System.out.println(ctx.expr(1).getText());
+        }
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
+        TreeNode zero = new TreeNode(ctx.expr(0).getText());
+
+        parent.addChild(expr);
+        expr.addChild(zero);
+
+        if (ctx.expr().size() > 1) {
+            TreeNode one = new TreeNode(ctx.expr(1).getText());
+            expr.addChild(one);
+        }
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitOrExpr(MuParser.OrExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterAdditiveExpr(MuParser.AdditiveExprContext ctx) {
+        System.out.println("EXPRESSION");
+        System.out.println("OPERATOR");
+        System.out.println(ctx.op.getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
+        TreeNode opNode = new TreeNode("OPERATOR");
+        TreeNode op = new TreeNode(ctx.op.getText());
+
+        parent.addChild(expr);
+        expr.addChild(opNode);
+        opNode.addChild(op);
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitAdditiveExpr(MuParser.AdditiveExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterPowExpr(MuParser.PowExprContext ctx) {
+        System.out.println("EXPRESSION");
+        System.out.println(ctx.expr(0).getText());
+        System.out.println(ctx.expr(1).getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
+        TreeNode zero = new TreeNode(ctx.expr(0).getText());
+        TreeNode one = new TreeNode(ctx.expr(1).getText());
+
+        parent.addChild(expr);
+        expr.addChild(zero);
+        expr.addChild(one);
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitPowExpr(MuParser.PowExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterRelationalExpr(MuParser.RelationalExprContext ctx) {
+        System.out.println("EXPRESSION");
+        System.out.println("OPERATOR");
+        System.out.println(ctx.op.getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
+        TreeNode opNode = new TreeNode("OPERATOR");
+        TreeNode op = new TreeNode(ctx.op.getText());
+
+        parent.addChild(expr);
+        expr.addChild(opNode);
+        opNode.addChild(op);
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitRelationalExpr(MuParser.RelationalExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterEqualityExpr(MuParser.EqualityExprContext ctx) {
+        System.out.println("EXPRESSION");
+        System.out.println("OPERATOR");
+        System.out.println(ctx.op.getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
+        TreeNode opNode = new TreeNode("OPERATOR");
+        TreeNode op = new TreeNode(ctx.op.getText());
+
+        parent.addChild(expr);
+        expr.addChild(opNode);
+        opNode.addChild(op);
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitEqualityExpr(MuParser.EqualityExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterAndExpr(MuParser.AndExprContext ctx) {
+        System.out.println("EXPRESSION");
+        System.out.println(ctx.expr(0).getText());
+        if (ctx.expr().size() > 1) {
+            System.out.println(ctx.expr(1).getText());
+        }
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode expr = new TreeNode("EXPRESSION");
+        TreeNode zero = new TreeNode(ctx.expr(0).getText());
+
+        parent.addChild(expr);
+        expr.addChild(zero);
+
+        if (ctx.expr().size() > 1) {
+            TreeNode one = new TreeNode(ctx.expr(1).getText());
+            expr.addChild(one);
+        }
+
+        nodeStack.push(expr);
+    }
+
+    @Override
+    public void exitAndExpr(MuParser.AndExprContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterParExpr(MuParser.ParExprContext ctx) {
+    }
+
+    @Override
+    public void exitParExpr(MuParser.ParExprContext ctx) {
+    }
+
+    @Override
+    public void enterNumberAtom(MuParser.NumberAtomContext ctx) {
+        System.out.println("NUMBER");
+        System.out.println(ctx.getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode num = new TreeNode("NUMBER");
+        TreeNode number = new TreeNode(ctx.getText());
+
+        parent.addChild(num);
+        num.addChild(number);
+
+        nodeStack.push(num);
     }
 
     @Override
     public void exitNumberAtom(MuParser.NumberAtomContext ctx) {
-        Node numberNode = new Node("NUMBER");
-        numberNode.addChild(new Node(ctx.getText()));
-        nodeStack.push(numberNode);
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterBooleanAtom(MuParser.BooleanAtomContext ctx) {
+        System.out.println(ctx.getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode value = new TreeNode(ctx.getText());
+
+        parent.addChild(value);
+
+        nodeStack.push(value);
+    }
+
+    @Override
+    public void exitBooleanAtom(MuParser.BooleanAtomContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterIdAtom(MuParser.IdAtomContext ctx) {
+        System.out.println("NAME");
+        System.out.println(ctx.getText());
+    
+        TreeNode parent = nodeStack.peek();
+        TreeNode nam = new TreeNode("NAME");
+        TreeNode name = new TreeNode(ctx.getText());
+
+        parent.addChild(nam);
+        nam.addChild(name);
+
+        nodeStack.push(nam);
     }
 
     @Override
     public void exitIdAtom(MuParser.IdAtomContext ctx) {
-        Node idNode = new Node("ID");
-        idNode.addChild(new Node(ctx.getText()));
-        nodeStack.push(idNode);
+        nodeStack.pop();
     }
+
+    @Override
+    public void enterStringAtom(MuParser.StringAtomContext ctx) {
+        System.out.println(ctx.getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode value = new TreeNode(ctx.getText());
+
+        parent.addChild(value);
+
+        nodeStack.push(value);
+    }
+
+    @Override
+    public void exitStringAtom(MuParser.StringAtomContext ctx) {
+        nodeStack.pop();
+    }
+
+    @Override
+    public void enterNilAtom(MuParser.NilAtomContext ctx) {
+        System.out.println(ctx.getText());
+
+        TreeNode parent = nodeStack.peek();
+        TreeNode value = new TreeNode(ctx.getText());
+
+        parent.addChild(value);
+
+        nodeStack.push(value);
+    }
+
+    @Override
+    public void exitNilAtom(MuParser.NilAtomContext ctx) {
+        nodeStack.pop();
+    }
+
 }
