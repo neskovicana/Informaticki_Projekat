@@ -119,6 +119,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitParse(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitParse(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final ParseContext parse() throws RecognitionException {
@@ -163,6 +168,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitBlock(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitBlock(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -227,6 +237,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitStat(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitStat(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -308,6 +323,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitAssignment(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitAssignment(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final AssignmentContext assignment() throws RecognitionException {
@@ -367,6 +387,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitIf_stat(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitIf_stat(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -446,6 +471,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitCondition_block(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitCondition_block(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final Condition_blockContext condition_block() throws RecognitionException {
@@ -492,6 +522,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitStat_block(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitStat_block(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -560,6 +595,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitWhile_stat(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitWhile_stat(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 
 	public final While_statContext while_stat() throws RecognitionException {
@@ -605,6 +645,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitLog(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitLog(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -660,6 +705,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitNotExpr(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitNotExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class UnaryMinusExprContext extends ExprContext {
@@ -675,6 +725,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitUnaryMinusExpr(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitUnaryMinusExpr(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
@@ -698,6 +753,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitMultiplicationExpr(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitMultiplicationExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class AtomExprContext extends ExprContext {
@@ -712,6 +772,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitAtomExpr(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitAtomExpr(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
@@ -731,6 +796,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitOrExpr(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitOrExpr(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
@@ -753,6 +823,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitAdditiveExpr(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitAdditiveExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class PowExprContext extends ExprContext {
@@ -771,6 +846,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitPowExpr(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitPowExpr(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
@@ -795,6 +875,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitRelationalExpr(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitRelationalExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class EqualityExprContext extends ExprContext {
@@ -816,6 +901,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitEqualityExpr(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitEqualityExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class AndExprContext extends ExprContext {
@@ -834,6 +924,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitAndExpr(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitAndExpr(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 
@@ -1078,6 +1173,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitParExpr(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitParExpr(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class BooleanAtomContext extends AtomContext {
@@ -1092,6 +1192,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitBooleanAtom(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitBooleanAtom(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class IdAtomContext extends AtomContext {
@@ -1104,6 +1209,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitIdAtom(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitIdAtom(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
@@ -1118,6 +1228,11 @@ public class MuParser extends Parser {
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitStringAtom(this);
 		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitStringAtom(this);
+			else return visitor.visitChildren(this);
+		}
 	}
 	@SuppressWarnings("CheckReturnValue")
 	public static class NilAtomContext extends AtomContext {
@@ -1130,6 +1245,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitNilAtom(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitNilAtom(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 	@SuppressWarnings("CheckReturnValue")
@@ -1144,6 +1264,11 @@ public class MuParser extends Parser {
 		@Override
 		public void exitRule(ParseTreeListener listener) {
 			if ( listener instanceof MuListener ) ((MuListener)listener).exitNumberAtom(this);
+		}
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof MuVisitor ) return ((MuVisitor<? extends T>)visitor).visitNumberAtom(this);
+			else return visitor.visitChildren(this);
 		}
 	}
 

@@ -1,7 +1,4 @@
-
-log "End of program";
-
-a = 3.14;
-b = true;
-c = "Hello World";
-d = nil;
+x = 11;
+while (x > 10) {
+    x = x-1;
+}
