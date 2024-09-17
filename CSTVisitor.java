@@ -9,17 +9,9 @@ public class CSTVisitor extends MuBaseVisitor<ParseTree> {
     TokenStream tokens;
     protected ParserRuleContext enrichedTree;
 
-    // @Override
-    // public ParseTree visit(ParseTree tree) {
-    // enrichedTree = (ParserRuleContext) super.visit(tree); // Posetimo originalno
-    // stablo
-    // return enrichedTree;
-    // }
-
     @Override
     public ParseTree visit(ParseTree tree) {
-        // Kreiraj i postavi inicijalni enrichedTree
-        enrichedTree = (ParserRuleContext) visit(tree); // Posetimo originalno stablo
+        enrichedTree = (ParserRuleContext) visit(tree);
         return enrichedTree;
     }
 
@@ -27,47 +19,8 @@ public class CSTVisitor extends MuBaseVisitor<ParseTree> {
         return enrichedTree;
     }
 
-    // @Override
-    // public ParseTree visitParse(MuParser.ParseContext ctx) {
-        
-    //     ParserRuleContext parent = ctx.getParent();
-    //     ParserRuleContext parseNode = new ParserRuleContext();
-    //     parseNode.setParent(parent);
-    //     parent.addChild(parseNode);
-
-    //     ParserRuleContext compilationUnit = new ParserRuleContext();
-    //     compilationUnit.getText().
-    //     parseNode.addChild(compilationUnit);
-
-    //     ParserRuleContext blockNode = (ParserRuleContext) visit(ctx.block());
-
-    //     compilationUnit.ad
-
-    //     return parseNode; // Vrati obogaćeni čvor
-
-    // }
-
-    // @Override
-    // public ParseTree visitBlock(MuParser.BlockContext ctx) {
-    //     // Kreiraj novi čvor za "BLOCK_STATEMENT"
-    //     ParserRuleContext blockNode = new ParserRuleContext();
-    //     blockNode.addChild(new TerminalNodeImpl(new CommonToken(MuParser.RULE_block, "BLOCK_SCOPE")));
-
-    //     // Iteriraj kroz sve statemente unutar bloka i poseti ih
-    //     for (MuParser.StatContext statCtx : ctx.stat()) {
-    //         ParserRuleContext statNode = (ParserRuleContext) visit(statCtx);
-    //         blockNode.addChild(statNode); // Dodaj svaki stat kao dete
-    //     }
-
-    //     // Dodaj obogaćeni čvor u enrichedTree
-    //     enrichedTree.addChild(blockNode);
-    //     ctx.chil
-    //     return blockNode;
-    // }
-
     @Override
     public ParseTree visitStat(MuParser.StatContext ctx) {
-        // Kreiraj novi čvor za "STATEMENT"
         ParserRuleContext statNode = new ParserRuleContext();
         statNode.addChild(new TerminalNodeImpl(new CommonToken(MuParser.RULE_stat, "STATEMENT")));
 
