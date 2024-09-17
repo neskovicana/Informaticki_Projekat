@@ -2,8 +2,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 class TreeNode {
-    String value;  // Vrednost čvora, npr. "=" za operator ili ime promenljive
-    List<TreeNode> children;  // Lista dece ovog čvora
+    String value;
+    List<TreeNode> children;
 
     public TreeNode(String value) {
         this.value = value;

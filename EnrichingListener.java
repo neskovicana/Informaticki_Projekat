@@ -1,5 +1,6 @@
 import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.Stack;
+import org.antlr.v4.runtime.*;
 
 public class EnrichingListener extends MuBaseListener {
 
@@ -12,22 +13,17 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterParse(MuParser.ParseContext ctx) {
-        System.out.println("COMPILATION_UNIT");
-
         root = new TreeNode("COMPILATION_UNIT");
         nodeStack.push(root);
     }
 
     @Override
     public void exitParse(MuParser.ParseContext ctx) {
-
+        nodeStack.pop();
     }
 
     @Override
     public void enterBlock(MuParser.BlockContext ctx) {
-        System.out.println("BLOCK_SCOPE");
-        System.out.println("{");
-
         TreeNode blockNode = new TreeNode("BLOCK_SCOPE");
         blockNode.addChild(new TreeNode("{"));
         nodeStack.peek().addChild(blockNode);
@@ -36,14 +32,11 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void exitBlock(MuParser.BlockContext ctx) {
-        System.out.println("}");
         nodeStack.pop();
     }
 
     @Override
     public void enterStat(MuParser.StatContext ctx) {
-        System.out.println("STATEMENT");
-
         TreeNode parent = nodeStack.peek();
         TreeNode statNode = new TreeNode("STATEMENT");
         parent.addChild(statNode);
@@ -58,12 +51,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterAssignment(MuParser.AssignmentContext ctx) {
-        System.out.println("ASSIGNMENT");
-        System.out.println("OPERATOR");
-        System.out.println("=");
-        System.out.println("NAME");
-        System.out.println(ctx.ID().getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode assignment = new TreeNode("ASSIGNMENT");
         TreeNode operator = new TreeNode("OPERATOR");
@@ -87,8 +74,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterIf_stat(MuParser.If_statContext ctx) {
-        System.out.println("BRANCH_STATEMENT");
-        
         TreeNode parent = nodeStack.peek();
         TreeNode statNode = new TreeNode("BRANCH_STATEMENT");
         parent.addChild(statNode);
@@ -105,21 +90,15 @@ public class EnrichingListener extends MuBaseListener {
     public void enterCondition_block(MuParser.Condition_blockContext ctx) {
         ParseTree parent = ctx.getParent();
 
-        // Prolazimo kroz roditelje dok ne pronađemo If_statContext
         while (parent != null) {
             if (parent instanceof MuParser.If_statContext) {
                 MuParser.If_statContext ifContext = (MuParser.If_statContext) parent;
 
-                // Prolazimo kroz sve condition_blocks unutar ifContext
                 for (int i = 0; i < ifContext.condition_block().size(); i++) {
                     MuParser.Condition_blockContext conditionBlock = ifContext.condition_block(i);
 
                     if (conditionBlock == ctx) {
                         if (i == 0) {
-                            // Ovo je if deo
-                            System.out.println("KEYWORD");
-                            System.out.println("if");
-
                             TreeNode parentTree = nodeStack.peek();
                             TreeNode keyword = new TreeNode("KEYWORD");
                             parentTree.addChild(keyword);
@@ -131,10 +110,6 @@ public class EnrichingListener extends MuBaseListener {
 
                             nodeStack.push(keyword);
                         } else {
-                            // Ovo je else if deo
-                            System.out.println("KEYWORD");
-                            System.out.println("else if");
-
                             TreeNode parentTree = nodeStack.peek();
                             TreeNode keyword = new TreeNode("KEYWORD");
                             parentTree.addChild(keyword);
@@ -153,15 +128,10 @@ public class EnrichingListener extends MuBaseListener {
             }
             parent = parent.getParent();
         }
-
-        System.out.println("CONDITION BLOCK");
-
-        System.out.println("(");
     }
 
     @Override
     public void exitCondition_block(MuParser.Condition_blockContext ctx) {
-        System.out.println(")");
         nodeStack.pop();
     }
 
@@ -173,9 +143,6 @@ public class EnrichingListener extends MuBaseListener {
             MuParser.If_statContext ifContext = (MuParser.If_statContext) parent;
 
             if (ifContext.stat_block() != null) {
-                System.out.println("KEYWORD");
-                System.out.println("else");
-
                 TreeNode parentTree = nodeStack.peek();
                 TreeNode keyword = new TreeNode("KEYWORD");
                 parentTree.addChild(keyword);
@@ -190,9 +157,6 @@ public class EnrichingListener extends MuBaseListener {
                 parentTree.addChild(stat);
             }
         }
-
-        System.out.println("STATEMENT");
-
     }
 
     @Override
@@ -201,11 +165,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterWhile_stat(MuParser.While_statContext ctx) {
-        System.out.println("LOOP_STATEMENT");
-        System.out.println("KEYWORD");
-        System.out.println("while");
-        System.out.println("CONDITION");
-
         TreeNode parent = nodeStack.peek();
         TreeNode statNode = new TreeNode("LOOP_STATEMENT");
         TreeNode keyNode = new TreeNode("KEYWORD");
@@ -227,9 +186,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterLog(MuParser.LogContext ctx) {
-        System.out.println("KEYWORD");
-        System.out.println("log");
-
         TreeNode parent = nodeStack.peek();
         TreeNode key = new TreeNode("KEYWORD");
         TreeNode log = new TreeNode("log");
@@ -246,8 +202,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterNotExpr(MuParser.NotExprContext ctx) {
-        System.out.println("EXPRESSION");
-
         TreeNode parent = nodeStack.peek();
         TreeNode expr = new TreeNode("EXPRESSION");
 
@@ -263,8 +217,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterUnaryMinusExpr(MuParser.UnaryMinusExprContext ctx) {
-        System.out.println("EXPRESSION");
-
         TreeNode parent = nodeStack.peek();
         TreeNode expr = new TreeNode("EXPRESSION");
 
@@ -280,12 +232,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterMultiplicationExpr(MuParser.MultiplicationExprContext ctx) {
-        System.out.println("EXPRESSION");
-        System.out.println("OPERATOR");
-        System.out.println(ctx.op.getText());
-        System.out.println(ctx.expr(0));
-        System.out.println(ctx.expr(1));
-
         TreeNode parent = nodeStack.peek();
         TreeNode expr = new TreeNode("EXPRESSION");
         TreeNode opNode = new TreeNode("OPERATOR");
@@ -305,22 +251,16 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterAtomExpr(MuParser.AtomExprContext ctx) {
-        // TreeNode parent = nodeStack.peek();
-        // TreeNode atomNode = new TreeNode(ctx.getText());
-        // parent.addChild(atomNode);
 
-        // nodeStack.push(atomNode);
     }
 
     @Override
     public void exitAtomExpr(MuParser.AtomExprContext ctx) {
-        // nodeStack.pop();
+
     }
 
     @Override
     public void enterOrExpr(MuParser.OrExprContext ctx) {
-        System.out.println("EXPRESSION");
-        System.out.println(ctx.expr(0).getText());
         if (ctx.expr().size() > 1) {
             System.out.println(ctx.expr(1).getText());
         }
@@ -347,10 +287,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterAdditiveExpr(MuParser.AdditiveExprContext ctx) {
-        System.out.println("EXPRESSION");
-        System.out.println("OPERATOR");
-        System.out.println(ctx.op.getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode expr = new TreeNode("EXPRESSION");
         TreeNode opNode = new TreeNode("OPERATOR");
@@ -370,10 +306,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterPowExpr(MuParser.PowExprContext ctx) {
-        System.out.println("EXPRESSION");
-        System.out.println(ctx.expr(0).getText());
-        System.out.println(ctx.expr(1).getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode expr = new TreeNode("EXPRESSION");
         TreeNode zero = new TreeNode(ctx.expr(0).getText());
@@ -393,10 +325,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterRelationalExpr(MuParser.RelationalExprContext ctx) {
-        System.out.println("EXPRESSION");
-        System.out.println("OPERATOR");
-        System.out.println(ctx.op.getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode expr = new TreeNode("EXPRESSION");
         TreeNode opNode = new TreeNode("OPERATOR");
@@ -416,10 +344,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterEqualityExpr(MuParser.EqualityExprContext ctx) {
-        System.out.println("EXPRESSION");
-        System.out.println("OPERATOR");
-        System.out.println(ctx.op.getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode expr = new TreeNode("EXPRESSION");
         TreeNode opNode = new TreeNode("OPERATOR");
@@ -439,8 +363,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterAndExpr(MuParser.AndExprContext ctx) {
-        System.out.println("EXPRESSION");
-        System.out.println(ctx.expr(0).getText());
         if (ctx.expr().size() > 1) {
             System.out.println(ctx.expr(1).getText());
         }
@@ -475,9 +397,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterNumberAtom(MuParser.NumberAtomContext ctx) {
-        System.out.println("NUMBER");
-        System.out.println(ctx.getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode num = new TreeNode("NUMBER");
         TreeNode number = new TreeNode(ctx.getText());
@@ -495,8 +414,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterBooleanAtom(MuParser.BooleanAtomContext ctx) {
-        System.out.println(ctx.getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode value = new TreeNode(ctx.getText());
 
@@ -512,9 +429,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterIdAtom(MuParser.IdAtomContext ctx) {
-        System.out.println("NAME");
-        System.out.println(ctx.getText());
-    
         TreeNode parent = nodeStack.peek();
         TreeNode nam = new TreeNode("NAME");
         TreeNode name = new TreeNode(ctx.getText());
@@ -532,8 +446,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterStringAtom(MuParser.StringAtomContext ctx) {
-        System.out.println(ctx.getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode value = new TreeNode(ctx.getText());
 
@@ -549,8 +461,6 @@ public class EnrichingListener extends MuBaseListener {
 
     @Override
     public void enterNilAtom(MuParser.NilAtomContext ctx) {
-        System.out.println(ctx.getText());
-
         TreeNode parent = nodeStack.peek();
         TreeNode value = new TreeNode(ctx.getText());
 
