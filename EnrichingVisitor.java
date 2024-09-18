@@ -1,226 +1,285 @@
-public class EnrichingVisitor extends MuBaseVisitor<UniversalNode> {
+public class EnrichingVisitor extends MuBaseVisitor<Node> implements MuVisitor<Node> {
 
     @Override
-    public UniversalNode visitParse(MuParser.ParseContext ctx) {
-        UniversalNode node = new UniversalNode("Parse", "Program");
-        UniversalNode blockNode = visit(ctx.block());
+    public Node visitParse(MuParser.ParseContext ctx) {
+        Node node = new Node("COMPILATION_UNIT");
+        Node blockNode = visit(ctx.block());
         node.addChild(blockNode);
         return node;
     }
 
+    // @Override
+    // public Node visitBlock(MuParser.BlockContext ctx) {
+    // Node node = new Node("BLOCK_SCOPE");
+    // node.addChild(new Node("{"));
+    // for (MuParser.StatContext statCtx : ctx.stat()) {
+    // node.addChild(visit(statCtx));
+    // }
+    // node.addChild(new Node("}"));
+    // return node;
+    // }
 
     @Override
-    public UniversalNode visitBlock(MuParser.BlockContext ctx) {
-        UniversalNode node = new UniversalNode("Block", "Block");
+    public Node visitBlock(MuParser.BlockContext ctx) {
+        Node node = new Node("BLOCK_SCOPE");
+        boolean cbAdded = false;
+
+        if (ctx.getStart().getText().equals("{")) {
+            node.addChild(new Node("{"));
+            cbAdded = true;
+        }
+
         for (MuParser.StatContext statCtx : ctx.stat()) {
             node.addChild(visit(statCtx));
         }
+
+        if (cbAdded) {
+            node.addChild(new Node("}"));
+        }
         return node;
     }
 
     @Override
-    public UniversalNode visitStat(MuParser.StatContext ctx) {
-        return visitChildren(ctx);
+    public Node visitStat(MuParser.StatContext ctx) {
+        Node statementNode = new Node("STATEMENT");
+        Node childNode = visitChildren(ctx);
+        statementNode.addChild(childNode);
+        return statementNode;
     }
 
     @Override
-    public UniversalNode visitAssignment(MuParser.AssignmentContext ctx) {
-        UniversalNode node = new UniversalNode("Assignment", ctx.ID().getText());
-        node.addChild(visit(ctx.expr()));
-        return node;
+    public Node visitAssignment(MuParser.AssignmentContext ctx) {
+        Node assignmentNode = new Node("ASSIGNMENT");
+
+        Node operator = new Node("OPERATOR");
+        Node operatorNode = new Node("=");
+        operator.addChild(operatorNode);
+
+        Node nameNode = new Node(ctx.ID().getText());
+        Node nameParent = new Node("NAME");
+        nameParent.addChild(nameNode);
+        operatorNode.addChild(nameParent);
+
+        Node exprNode = visit(ctx.expr());
+        operatorNode.addChild(exprNode);
+
+        assignmentNode.addChild(operator);
+        return assignmentNode;
     }
 
     @Override
-    public UniversalNode visitIf_stat(MuParser.If_statContext ctx) {
-        UniversalNode node = new UniversalNode("IfStat", "If Statement");
+    public Node visitIf_stat(MuParser.If_statContext ctx) {
+        Node branchNode = new Node("BRANCH_STATEMENT");
 
-        // Process the initial condition block
-        node.addChild(visit(ctx.condition_block(0)));
+        Node ifKeywordNode = new Node("KEYWORD");
+        ifKeywordNode.addChild(new Node("if"));
+        branchNode.addChild(ifKeywordNode);
 
-        // Handle chained else-if conditions
-        int i = 1;
-        while (i < ctx.condition_block().size()) {
-            UniversalNode elseIfNode = new UniversalNode("ElseIf", "Else If Statement");
-            elseIfNode.addChild(visit(ctx.condition_block(i)));
-            node.addChild(elseIfNode);
-            i++;
+        branchNode.addChild(visit(ctx.condition_block(0)));
+
+        for (int i = 1; i < ctx.condition_block().size(); i++) {
+            Node elseIfKeywordNode = new Node("KEYWORD");
+            elseIfKeywordNode.addChild(new Node("else if"));
+            branchNode.addChild(elseIfKeywordNode);
+
+            branchNode.addChild(visit(ctx.condition_block(i)));
         }
 
-        // Handle the final else block if present
         if (ctx.stat_block() != null) {
-            UniversalNode elseNode = new UniversalNode("Else", "Else Statement");
-            elseNode.addChild(visit(ctx.stat_block()));
-            node.addChild(elseNode);
+            Node elseKeywordNode = new Node("KEYWORD");
+            elseKeywordNode.addChild(new Node("else"));
+            branchNode.addChild(elseKeywordNode);
+
+            branchNode.addChild(visit(ctx.stat_block()));
         }
 
-        return node;
+        return branchNode;
     }
 
     @Override
-    public UniversalNode visitCondition_block(MuParser.Condition_blockContext ctx) {
-        UniversalNode node = new UniversalNode("ConditionBlock", "Condition");
-        node.addChild(visit(ctx.expr()));
-        node.addChild(visit(ctx.stat_block()));
-        return node;
+    public Node visitCondition_block(MuParser.Condition_blockContext ctx) {
+        Node conditionNode = visit(ctx.expr());
+
+        Node statementBlockNode = visit(ctx.stat_block());
+
+        Node conditionBlockNode = new Node("CONDITION_BLOCK");
+        conditionBlockNode.addChild(new Node("("));
+        conditionBlockNode.addChild(conditionNode);
+        conditionBlockNode.addChild(new Node(")"));
+        conditionBlockNode.addChild(statementBlockNode);
+
+        return conditionBlockNode;
     }
 
     @Override
-    public UniversalNode visitStat_block(MuParser.Stat_blockContext ctx) {
-        return visit(ctx.block());
+    public Node visitStat_block(MuParser.Stat_blockContext ctx) {
+        Node blockScopeNode = new Node("STATEMENT");
+        Node blockNode = visit(ctx.block());
+        blockScopeNode.addChild(blockNode);
+        return blockScopeNode;
     }
 
     @Override
-    public UniversalNode visitWhile_stat(MuParser.While_statContext ctx) {
-        System.out.println("Visiting While Statement");
-        UniversalNode node = new UniversalNode("WhileStat", "While Loop");
-        node.addChild(visit(ctx.expr()));
-        node.addChild(visit(ctx.stat_block()));
-        return node;
+    public Node visitWhile_stat(MuParser.While_statContext ctx) {
+        Node loopNode = new Node("LOOP_STATEMENT");
+
+        Node whileKeywordNode = new Node("KEYWORD");
+        whileKeywordNode.addChild(new Node("while"));
+        loopNode.addChild(whileKeywordNode);
+
+        Node conditionNode = new Node("CONDITION");
+        conditionNode.addChild(new Node("("));
+        conditionNode.addChild(visit(ctx.expr()));
+        conditionNode.addChild(new Node(")"));
+        loopNode.addChild(conditionNode);
+
+        loopNode.addChild(visit(ctx.stat_block()));
+
+        return loopNode;
     }
 
     @Override
-    public UniversalNode visitLog(MuParser.LogContext ctx) {
-        UniversalNode node = new UniversalNode("Log", "Log Statement");
-        node.addChild(visit(ctx.expr()));
-        return node;
+    public Node visitLog(MuParser.LogContext ctx) {
+        Node operator = new Node("KEYWORD");
+        Node logNode = new Node("log");
+        operator.addChild(logNode);
+        logNode.addChild(visit(ctx.expr()));
+        return operator;
     }
 
     @Override
-    public UniversalNode visitNotExpr(MuParser.NotExprContext ctx) {
-        UniversalNode node = new UniversalNode("NotExpr", "Not Expression");
-        node.addChild(visit(ctx.expr()));
-        return node;
+    public Node visitNotExpr(MuParser.NotExprContext ctx) {
+        Node notExprNode = new Node("EXPRESSION");
+        notExprNode.addChild(visit(ctx.expr()));
+        return notExprNode;
     }
 
     @Override
-    public UniversalNode visitUnaryMinusExpr(MuParser.UnaryMinusExprContext ctx) {
-        UniversalNode node = new UniversalNode("UnaryMinusExpr", "Unary Minus");
-        node.addChild(visit(ctx.expr()));
-        return node;
+    public Node visitUnaryMinusExpr(MuParser.UnaryMinusExprContext ctx) {
+        Node unaryMinusNode = new Node("EXPRESSION");
+        unaryMinusNode.addChild(visit(ctx.expr()));
+        return unaryMinusNode;
     }
 
     @Override
-    public UniversalNode visitMultiplicationExpr(MuParser.MultiplicationExprContext ctx) {
-        UniversalNode node = new UniversalNode("MultiplicationExpr", ctx.op.getText());
-        node.addChild(visit(ctx.expr(0)));
-        node.addChild(visit(ctx.expr(1)));
-        return node;
+    public Node visitMultiplicationExpr(MuParser.MultiplicationExprContext ctx) {
+        Node multiplicationNode = new Node("EXPRESSION");
+        Node operator = new Node("OPERATOR");
+        multiplicationNode.addChild(operator);
+        Node multiplication = new Node(ctx.op.getText());
+        multiplication.addChild(visit(ctx.expr(0)));
+        multiplication.addChild(visit(ctx.expr(1)));
+        operator.addChild(multiplication);
+        return multiplicationNode;
     }
 
     @Override
-    public UniversalNode visitAtomExpr(MuParser.AtomExprContext ctx) {
+    public Node visitAtomExpr(MuParser.AtomExprContext ctx) {
         return visit(ctx.atom());
     }
 
     @Override
-    public UniversalNode visitOrExpr(MuParser.OrExprContext ctx) {
-        UniversalNode node = new UniversalNode("OrExpr", "OR");
-
-        // Process the first expression
-        node.addChild(visit(ctx.expr(0)));
-
-        // Process the second expression
+    public Node visitOrExpr(MuParser.OrExprContext ctx) {
+        Node orNode = new Node("EXPRESSION");
+        orNode.addChild(visit(ctx.expr(0)));
         if (ctx.expr().size() > 1) {
-            node.addChild(visit(ctx.expr(1)));
+            orNode.addChild(visit(ctx.expr(1)));
         }
-
-        return node;
-    }
-
-
-    @Override
-    public UniversalNode visitAdditiveExpr(MuParser.AdditiveExprContext ctx) {
-        UniversalNode node = new UniversalNode("AdditiveExpr", ctx.op.getText());
-        node.addChild(visit(ctx.expr(0)));
-        node.addChild(visit(ctx.expr(1)));
-        return node;
+        return orNode;
     }
 
     @Override
-    public UniversalNode visitPowExpr(MuParser.PowExprContext ctx) {
-        UniversalNode node = new UniversalNode("PowExpr", "Power");
-        node.addChild(visit(ctx.expr(0)));
-        node.addChild(visit(ctx.expr(1)));
-        return node;
+    public Node visitAdditiveExpr(MuParser.AdditiveExprContext ctx) {
+        Node additiveNode = new Node("EXPRESSION");
+        Node operator = new Node("OPERATOR");
+        additiveNode.addChild(operator);
+        Node addition = new Node(ctx.op.getText());
+        addition.addChild(visit(ctx.expr(0)));
+        addition.addChild(visit(ctx.expr(1)));
+        operator.addChild(addition);
+        return additiveNode;
     }
 
     @Override
-    public UniversalNode visitRelationalExpr(MuParser.RelationalExprContext ctx) {
-        UniversalNode node = new UniversalNode("RelationalExpr", ctx.op.getText());
-        node.addChild(visit(ctx.expr(0)));
-        node.addChild(visit(ctx.expr(1)));
-        return node;
+    public Node visitPowExpr(MuParser.PowExprContext ctx) {
+        Node powNode = new Node("EXPRESSION");
+        powNode.addChild(visit(ctx.expr(0)));
+        powNode.addChild(visit(ctx.expr(1)));
+        return powNode;
     }
 
     @Override
-    public UniversalNode visitEqualityExpr(MuParser.EqualityExprContext ctx) {
-        UniversalNode node = new UniversalNode("EqualityExpr", ctx.op.getText());
-        node.addChild(visit(ctx.expr(0)));
-        node.addChild(visit(ctx.expr(1)));
-        return node;
+    public Node visitRelationalExpr(MuParser.RelationalExprContext ctx) {
+        Node relationalNode = new Node("EXPRESSION");
+        Node operator = new Node("OPERATOR");
+        relationalNode.addChild(operator);
+        Node relation = new Node(ctx.op.getText());
+        relation.addChild(visit(ctx.expr(0)));
+        relation.addChild(visit(ctx.expr(1)));
+        operator.addChild(relation);
+        return relationalNode;
     }
 
     @Override
-    public UniversalNode visitAndExpr(MuParser.AndExprContext ctx) {
-        UniversalNode node = new UniversalNode("AndExpr", ctx.AND().getText());
-    
-        // Process the first expression
-        node.addChild(visit(ctx.expr(0)));
-    
-        // Process the second expression
+    public Node visitEqualityExpr(MuParser.EqualityExprContext ctx) {
+        Node equalityNode = new Node("EXPRESSION");
+        Node operator = new Node("OPERATOR");
+        equalityNode.addChild(operator);
+        Node equality = new Node(ctx.op.getText());
+        equality.addChild(visit(ctx.expr(0)));
+        equality.addChild(visit(ctx.expr(1)));
+        operator.addChild(equality);
+        return equalityNode;
+    }
+
+    @Override
+    public Node visitAndExpr(MuParser.AndExprContext ctx) {
+        Node andNode = new Node("EXPRESSION");
+        andNode.addChild(visit(ctx.expr(0)));
         if (ctx.expr().size() > 1) {
-            node.addChild(visit(ctx.expr(1)));
+            andNode.addChild(visit(ctx.expr(1)));
         }
-    
-        return node;
+        return andNode;
     }
-    
 
     @Override
-    public UniversalNode visitParExpr(MuParser.ParExprContext ctx) {
+    public Node visitParExpr(MuParser.ParExprContext ctx) {
         return visit(ctx.expr());
     }
 
     @Override
-    public UniversalNode visitNumberAtom(MuParser.NumberAtomContext ctx) {
-        // Check if it's an integer or float and use the appropriate method
-        if (ctx.INT() != null) {
-            return new UniversalNode("Number", ctx.INT().getText());
-        } else if (ctx.FLOAT() != null) {
-            return new UniversalNode("Number", ctx.FLOAT().getText());
-        } else {
-            // Handle unexpected cases
-            throw new IllegalArgumentException("Unexpected token type in NumberAtomContext");
-        }
-    }
-    
-
-    @Override
-    public UniversalNode visitBooleanAtom(MuParser.BooleanAtomContext ctx) {
-        // Check if the token is TRUE or FALSE
-        if (ctx.TRUE() != null) {
-            return new UniversalNode("Boolean", ctx.TRUE().getText());
-        } else if (ctx.FALSE() != null) {
-            return new UniversalNode("Boolean", ctx.FALSE().getText());
-        } else {
-            // Handle unexpected cases
-            throw new IllegalArgumentException("Unexpected token type in BooleanAtomContext");
-        }
-    }
-    
-
-    @Override
-    public UniversalNode visitIdAtom(MuParser.IdAtomContext ctx) {
-        return new UniversalNode("ID", ctx.ID().getText());
+    public Node visitNumberAtom(MuParser.NumberAtomContext ctx) {
+        String type = ctx.INT() != null ? "INT" : "FLOAT";
+        Node numberNode = new Node("NUMBER");
+        numberNode.addChild(new Node(ctx.getText()));
+        return numberNode;
     }
 
     @Override
-    public UniversalNode visitStringAtom(MuParser.StringAtomContext ctx) {
-        return new UniversalNode("String", ctx.STRING().getText());
+    public Node visitBooleanAtom(MuParser.BooleanAtomContext ctx) {
+        Node booleanNode = new Node("BOOLEAN");
+        booleanNode.addChild(new Node(ctx.getText()));
+        return booleanNode;
     }
 
     @Override
-    public UniversalNode visitNilAtom(MuParser.NilAtomContext ctx) {
-        return new UniversalNode("Nil", "nil");
+    public Node visitIdAtom(MuParser.IdAtomContext ctx) {
+        Node idNode = new Node("ID");
+        idNode.addChild(new Node(ctx.ID().getText()));
+        return idNode;
+    }
+
+    @Override
+    public Node visitStringAtom(MuParser.StringAtomContext ctx) {
+        Node stringNode = new Node("STRING");
+        stringNode.addChild(new Node(ctx.STRING().getText()));
+        return stringNode;
+    }
+
+    @Override
+    public Node visitNilAtom(MuParser.NilAtomContext ctx) {
+        Node nilNode = new Node("NIL");
+        nilNode.addChild(new Node("nil"));
+        return nilNode;
     }
 }

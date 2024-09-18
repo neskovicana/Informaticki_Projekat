@@ -1,4 +1,4 @@
-x = 11;
-while (x > 10) {
-    x = x-1;
-}
+a = 3.14;
+b = true;
+c = "Hello World";
+d = nil;
