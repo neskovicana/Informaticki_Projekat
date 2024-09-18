@@ -25,13 +25,25 @@ public class EnrichingListener extends MuBaseListener {
     @Override
     public void enterBlock(MuParser.BlockContext ctx) {
         TreeNode blockNode = new TreeNode("BLOCK_SCOPE");
-        blockNode.addChild(new TreeNode("{"));
+
+        if (ctx.getStart().getText().equals("{")) {
+            blockNode.addChild(new TreeNode("{"));
+        }
         nodeStack.peek().addChild(blockNode);
         nodeStack.push(blockNode);
     }
 
     @Override
     public void exitBlock(MuParser.BlockContext ctx) {
+        if (ctx.getStop().getText().equals("}")) {
+            // Pristup trenutnom blok čvoru
+            TreeNode currentBlockNode = nodeStack.peek();
+
+            // Dodaj zatvorenu zagradu "}" na kraj bloka
+            currentBlockNode.addChild(new TreeNode("}"));
+        }
+
+        // Uklanjamo trenutni blok čvor sa steka
         nodeStack.pop();
     }
 
@@ -62,7 +74,7 @@ public class EnrichingListener extends MuBaseListener {
         assignment.addChild(operator);
         operator.addChild(equals);
         equals.addChild(name);
-        equals.addChild(value);
+        name.addChild(value);
 
         nodeStack.push(assignment);
     }
@@ -398,12 +410,26 @@ public class EnrichingListener extends MuBaseListener {
     @Override
     public void enterNumberAtom(MuParser.NumberAtomContext ctx) {
         TreeNode parent = nodeStack.peek();
+
+        for (TreeNode n : parent.getChildren()) {
+            if (n.getValue().equals("OPERATOR")) {
+                for (TreeNode n2 : n.getChildren()) {
+                    if (n2.getValue().equals("=")) {
+                        TreeNode num = new TreeNode("NUMBER");
+                        TreeNode number = new TreeNode(ctx.getText());
+                        n2.addChild(num);
+                        num.addChild(number);
+                        nodeStack.push(num);
+                        return;
+                    }
+                }
+            }
+        }
+
         TreeNode num = new TreeNode("NUMBER");
         TreeNode number = new TreeNode(ctx.getText());
-
         parent.addChild(num);
         num.addChild(number);
-
         nodeStack.push(num);
     }
 
@@ -415,11 +441,27 @@ public class EnrichingListener extends MuBaseListener {
     @Override
     public void enterBooleanAtom(MuParser.BooleanAtomContext ctx) {
         TreeNode parent = nodeStack.peek();
-        TreeNode value = new TreeNode(ctx.getText());
 
-        parent.addChild(value);
+        for (TreeNode n : parent.getChildren()) {
+            if (n.getValue().equals("OPERATOR")) {
+                for (TreeNode n2 : n.getChildren()) {
+                    if (n2.getValue().equals("=")) {
+                        TreeNode boolNode = new TreeNode("BOOLEAN");
+                        TreeNode boolValue = new TreeNode(ctx.getText());
+                        n2.addChild(boolNode);
+                        boolNode.addChild(boolValue);
+                        nodeStack.push(boolNode);
+                        return;
+                    }
+                }
+            }
+        }
 
-        nodeStack.push(value);
+        TreeNode boolNode = new TreeNode("BOOLEAN");
+        TreeNode boolValue = new TreeNode(ctx.getText());
+        parent.addChild(boolNode);
+        boolNode.addChild(boolValue);
+        nodeStack.push(boolNode);
     }
 
     @Override
@@ -447,11 +489,27 @@ public class EnrichingListener extends MuBaseListener {
     @Override
     public void enterStringAtom(MuParser.StringAtomContext ctx) {
         TreeNode parent = nodeStack.peek();
-        TreeNode value = new TreeNode(ctx.getText());
 
-        parent.addChild(value);
+        for (TreeNode n : parent.getChildren()) {
+            if (n.getValue().equals("OPERATOR")) {
+                for (TreeNode n2 : n.getChildren()) {
+                    if (n2.getValue().equals("=")) {
+                        TreeNode stringNode = new TreeNode("STRING");
+                        TreeNode stringValue = new TreeNode(ctx.getText());
+                        n2.addChild(stringNode);
+                        stringNode.addChild(stringValue);
+                        nodeStack.push(stringNode);
+                        return;
+                    }
+                }
+            }
+        }
 
-        nodeStack.push(value);
+        TreeNode stringNode = new TreeNode("STRING");
+        TreeNode stringValue = new TreeNode(ctx.getText());
+        parent.addChild(stringNode);
+        stringNode.addChild(stringValue);
+        nodeStack.push(stringNode);
     }
 
     @Override
@@ -462,11 +520,27 @@ public class EnrichingListener extends MuBaseListener {
     @Override
     public void enterNilAtom(MuParser.NilAtomContext ctx) {
         TreeNode parent = nodeStack.peek();
-        TreeNode value = new TreeNode(ctx.getText());
 
-        parent.addChild(value);
+        for (TreeNode n : parent.getChildren()) {
+            if (n.getValue().equals("OPERATOR")) {
+                for (TreeNode n2 : n.getChildren()) {
+                    if (n2.getValue().equals("=")) {
+                        TreeNode nilNode = new TreeNode("NIL");
+                        TreeNode nilValue = new TreeNode(ctx.getText());
+                        n2.addChild(nilNode);
+                        nilNode.addChild(nilValue);
+                        nodeStack.push(nilNode);
+                        return;
+                    }
+                }
+            }
+        }
 
-        nodeStack.push(value);
+        TreeNode nilNode = new TreeNode("NIL");
+        TreeNode nilValue = new TreeNode(ctx.getText());
+        parent.addChild(nilNode);
+        nilNode.addChild(nilValue);
+        nodeStack.push(nilNode);
     }
 
     @Override

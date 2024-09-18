@@ -28,15 +28,11 @@ public class TestEnrichingListener {
         printTree(listener.getRoot(), 0);
     }
 
-    private static void printTree(TreeNode node, int level) {
-
-        for (int i = 0; i < level; i++) {
-            System.out.print("  "); 
-        }
-        System.out.println(node.getValue());
-
+    private static void printTree(TreeNode node, int depth) {
+        String indent = " ".repeat(depth * 2);
+        System.out.println(indent + node.getValue());
         for (TreeNode child : node.getChildren()) {
-            printTree(child, level + 1);
+            printTree(child, depth + 1);
         }
     }
 }
