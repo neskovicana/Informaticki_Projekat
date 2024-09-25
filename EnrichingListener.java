@@ -1,6 +1,5 @@
 import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.Stack;
-import org.antlr.v4.runtime.*;
 
 public class EnrichingListener extends MuBaseListener {
 
@@ -36,14 +35,10 @@ public class EnrichingListener extends MuBaseListener {
     @Override
     public void exitBlock(MuParser.BlockContext ctx) {
         if (ctx.getStop().getText().equals("}")) {
-            // Pristup trenutnom blok čvoru
             TreeNode currentBlockNode = nodeStack.peek();
-
-            // Dodaj zatvorenu zagradu "}" na kraj bloka
             currentBlockNode.addChild(new TreeNode("}"));
         }
 
-        // Uklanjamo trenutni blok čvor sa steka
         nodeStack.pop();
     }
 
