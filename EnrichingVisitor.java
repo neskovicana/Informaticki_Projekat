@@ -1,4 +1,4 @@
-public class EnrichingVisitor extends MuBaseVisitor<Node> implements MuVisitor<Node> {
+public class EnrichingVisitor extends MuBaseVisitor<Node> {
 
     @Override
     public Node visitParse(MuParser.ParseContext ctx) {
@@ -7,17 +7,6 @@ public class EnrichingVisitor extends MuBaseVisitor<Node> implements MuVisitor<N
         node.addChild(blockNode);
         return node;
     }
-
-    // @Override
-    // public Node visitBlock(MuParser.BlockContext ctx) {
-    // Node node = new Node("BLOCK_SCOPE");
-    // node.addChild(new Node("{"));
-    // for (MuParser.StatContext statCtx : ctx.stat()) {
-    // node.addChild(visit(statCtx));
-    // }
-    // node.addChild(new Node("}"));
-    // return node;
-    // }
 
     @Override
     public Node visitBlock(MuParser.BlockContext ctx) {
@@ -249,7 +238,7 @@ public class EnrichingVisitor extends MuBaseVisitor<Node> implements MuVisitor<N
 
     @Override
     public Node visitNumberAtom(MuParser.NumberAtomContext ctx) {
-        String type = ctx.INT() != null ? "INT" : "FLOAT";
+        // String type = ctx.INT() != null ? "INT" : "FLOAT";
         Node numberNode = new Node("NUMBER");
         numberNode.addChild(new Node(ctx.getText()));
         return numberNode;
